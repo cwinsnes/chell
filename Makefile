@@ -1,17 +1,31 @@
 CC = gcc
-CFLAGS = -Wall
+SRCDIR = src
+OBJDIR = obj
+BINDIR = bin
+CFLAGS = -Wall -Wextra -I./$(SRCDIR)
+SOURCES = $(wildcard $(SRCDIR)/*.c)
+OBJECTS = $(SOURCES:$(SRCDIR)/%.c=$(OBJDIR)/%.o)
 
-chell: chell.o lineedit.o exec.o
-	$(CC) $(CFLAGS) -o chell chell.o lineedit.o exec.o
+.Phony: all
+all: directories chell
 
-chell.o: chell.c
-	$(CC) $(CFLAGS) -c chell.c
+chell: $(OBJECTS)
+	$(CC) $(CFLAGS) $^ -o $(BINDIR)/$@
 
-lineedit.o: lineedit.c
-	$(CC) $(CFLAGS) -c lineedit.c
+$(OBJDIR)/%.o : $(SRCDIR)/%.c
+	$(CC) $(CFLAGS) -c $< -o $@
 
-exec.o: exec.c
-	$(CC) $(CFLAGS) -c exec.c
+directories: $(OBJDIR) $(BINDIR) $(SRCDIR)
 
+$(SRCDIR):
+	mkdir -p $(SRCDIR)
+
+$(OBJDIR):
+	mkdir -p $(OBJDIR)
+
+$(BINDIR):
+	mkdir -p $(BINDIR)
+
+.Phony: clean
 clean:
-	rm -f *.o chell
+	rm -f $(OBJDIR)/*.o $(BINDIR)/*
