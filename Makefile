@@ -12,3 +12,6 @@ lineedit.o: lineedit.c
 
 exec.o: exec.c
 	$(CC) $(CFLAGS) -c exec.c
+
+clean:
+	rm -f *.o chell
