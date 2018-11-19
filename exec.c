@@ -1,6 +1,8 @@
 #include "exec.h"
+
+#include <unistd.h>
 #include <stdlib.h>
-#include "string.h"
+#include <string.h>
 #include <stdio.h>
 #include <wait.h>
 
@@ -62,7 +64,7 @@ void execute_command(struct command *command)
 
   pid_t pid = fork();
   if (pid == 0) {
-    int err = execvp(command->exe, command->args);
+    execvp(command->exe, command->args);
     perror(command->exe);
   }
 
