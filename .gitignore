@@ -54,3 +54,4 @@ dkms.conf
 # Chell specific
 chell
 *.swp
+.#*
