@@ -34,7 +34,7 @@ void _ch_readline_setup(void)
 char* ch_readline(const char *prompt)
 {
   _ch_readline_setup();
-  int i;
+  size_t i;
   char* buffer = malloc(sizeof(char) * DEFAULT_BUF_SIZE);
   buffer[DEFAULT_BUF_SIZE - 1] = '\0';
   size_t bufindex = 0;

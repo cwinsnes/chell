@@ -45,7 +45,7 @@ struct command* parse_command(char *input)
 
 void free_command(struct command *command)
 {
-  int i;
+  size_t i;
   // Note: No need to free command->exe because command->args[0]
   // points to the same memory.
   for (i=0; i<command->num_args; ++i) {

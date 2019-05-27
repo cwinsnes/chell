@@ -2,7 +2,8 @@ CC = gcc
 SRCDIR = src
 OBJDIR = obj
 BINDIR = bin
-CFLAGS = -Wall -Wextra -I./$(SRCDIR)
+INCLUDEDIR = include
+CFLAGS = -Wall -Wextra -I./$(SRCDIR) -I ./$(INCLUDEDIR)
 SOURCES = $(wildcard $(SRCDIR)/*.c)
 OBJECTS = $(SOURCES:$(SRCDIR)/%.c=$(OBJDIR)/%.o)
 
