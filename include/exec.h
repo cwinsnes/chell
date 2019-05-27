@@ -1,3 +1,6 @@
+#ifndef CHELL_EXEC_H
+#define CHELL_EXEC_H
+
 #include <stdlib.h>
 
 struct command {
@@ -32,3 +35,5 @@ void free_command(struct command*);
  * @param command Command to be executed.
  */
 void execute_command(struct command*);
+
+#endif

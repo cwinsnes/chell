@@ -31,7 +31,7 @@ void _ch_readline_setup(void)
 }
 
 
-char* ch_readline(const char *prompt)
+char* ch_readline(const char *prompt, size_t promptlen)
 {
   _ch_readline_setup();
   size_t i;
@@ -69,7 +69,7 @@ char* ch_readline(const char *prompt)
     buffer[bufindex] = '\0';
     clearline();
     printf("%s%s", prompt, buffer);
-    cursorpos(bufindex+strlen(prompt));
+    cursorpos(bufindex+promptlen);
     fflush(stdout);
 
   } while (c != '\n');
