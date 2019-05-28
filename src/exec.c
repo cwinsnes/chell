@@ -1,4 +1,5 @@
 #include "exec.h"
+#include "hashm.h"
 
 #include <unistd.h>
 #include <stdlib.h>
@@ -55,10 +56,15 @@ void free_command(struct command *command)
   free(command);
 }
 
-
-void execute_command(struct command *command)
+void execute_command(struct command *command, struct hashmap *builtins)
 {
   if (!strcmp(command->exe, "")) {
+    return;
+  }
+  if (hashm_haskey(builtins, command->exe)) {
+    void (*func)(struct command*);
+    hashm_get(builtins, command->exe, (void**)&func);
+    func(command);
     return;
   }
 

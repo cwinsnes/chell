@@ -2,6 +2,7 @@
 #define CHELL_EXEC_H
 
 #include <stdlib.h>
+#include "hashm.h"
 
 struct command {
   char *exe;
@@ -33,7 +34,8 @@ void free_command(struct command*);
  * Will not execute anything if the command is equal to the empty
  * string.
  * @param command Command to be executed.
+ * @param builtins A hashmap containing all builtin commands.
  */
-void execute_command(struct command*);
+void execute_command(struct command*, struct hashmap*);
 
 #endif
