@@ -38,8 +38,7 @@ void hashm_insert(struct hashmap *map, char *key, void *value)
   while (list->used) {
     list = list -> next;
   }
-  list -> key = malloc(strlen(key)+1);
-  strcpy(list -> key, key);
+  list -> key = key;
   list -> value = value;
   list -> used = 1;
   list -> next = calloc(1, sizeof(struct hash_node));

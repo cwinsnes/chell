@@ -10,6 +10,7 @@ void changedir(struct command *cmd)
 {
   if (cmd -> num_args > 2) {
     fprintf(stderr, "%s: Too many arguments\n", cmd->exe);
+    return;
   }
   int ret = chdir(cmd->args[1]);
   if (ret) {
