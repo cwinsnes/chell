@@ -35,14 +35,16 @@ void hashm_insert(struct hashmap *map, char *key, void *value)
   size_t index = hash % map -> capacity;
 
   struct hash_node *list = &(map -> entries[index]);
-  while (list->used) {
+  while (list->used && strcmp(list->key, key)) {
     list = list -> next;
+  }
+  if (!list -> used) {
+    map -> size += 1;
   }
   list -> key = key;
   list -> value = value;
   list -> used = 1;
   list -> next = calloc(1, sizeof(struct hash_node));
-  map -> size += 1;
 }
 
 void hashm_get(struct hashmap *map, char *key, void **value)
