@@ -3,8 +3,13 @@
 #include "errno.h"
 #include <stdio.h>
 #include <unistd.h>
+#include <ctype.h>
+#include <string.h>
+#include <math.h>
+#include "globals.h"
 
 #define CD "cd"
+#define EXIT "exit"
 
 void changedir(struct command *cmd)
 {
@@ -18,10 +23,22 @@ void changedir(struct command *cmd)
   }
 }
 
+void chell_exit(struct command *cmd)
+{
+  int exit_code = 0;
+  if (cmd -> num_args > 1) {
+    // atoi returns 0 on invalid number
+    exit_code = abs(atoi(cmd -> args[1]));
+  }
+
+  CHELL_RUNNING = -exit_code;
+}
+
 struct hashmap* initialize_builtins(void)
 {
   struct hashmap *builtins = hashm_create(32);
-  hashm_insert(builtins, "cd", changedir);
+  hashm_insert(builtins, CD, changedir);
+  hashm_insert(builtins, EXIT, chell_exit);
   return builtins;
 }
 

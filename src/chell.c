@@ -7,6 +7,9 @@
 #include <libgen.h>
 #include <string.h>
 #include <regex.h>
+#include "globals.h"
+
+int CHELL_RUNNING = 1;
 
 #define MAXPATH 4096
 
@@ -19,7 +22,7 @@ int main(void)
 
   struct hashmap *builtins = initialize_builtins();
 
-  while (1) {
+  while (CHELL_RUNNING>0) {
     if (!(getcwd(cwd, MAXPATH))) {
 	perror("Error when reading current directory");
 	exit(-1);
@@ -34,5 +37,5 @@ int main(void)
     free_command(command);
     free(line);
   }
-  return 0;
+  return CHELL_RUNNING;
 }
