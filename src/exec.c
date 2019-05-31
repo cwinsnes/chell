@@ -8,15 +8,15 @@
 #include <wait.h>
 
 #define DELIMITERS " \t"
+#define PIPE "|"
 
-struct command* parse_command(char *input)
+void read_command_string(char *input, struct command *command)
 {
   char tmp[strlen(input)];
   strcpy(tmp, input);
 
-  struct command *command = malloc(sizeof(struct command));
-
-  char *token = strtok(tmp, DELIMITERS);
+  char *savepointer = NULL;
+  char *token = strtok_r(tmp, DELIMITERS, &savepointer);
   if (token == NULL) {
     token = "";
   }
@@ -28,7 +28,7 @@ struct command* parse_command(char *input)
   command->args = malloc(sizeof(char *) * arg_buf);
   command->args[0] = command->exe;
 
-  while ((token = strtok(NULL, DELIMITERS)) != NULL) {
+  while ((token = strtok_r(NULL, DELIMITERS, &savepointer)) != NULL) {
     command->args[num_args] = malloc(sizeof(char) * strlen(token)+1);
     strcpy(command->args[num_args], token);
     num_args += 1;
@@ -40,8 +40,37 @@ struct command* parse_command(char *input)
   }
   command->args[num_args] = NULL;
   command->num_args = num_args;
+}
 
-  return command;
+// TODO: Change all parsing into some kind of simple
+//       recursive descent parser or similar.
+//       Should make it easier than relying on strtok.
+struct command* parse_command(char *input)
+{
+  struct command *first = NULL;
+  struct command *previous = NULL;
+  char cpy[strlen(input)+1];
+  strcpy(cpy, input);
+  char *savepointer = NULL;
+  char *currcmd = strtok_r(cpy, PIPE, &savepointer);
+  do {
+    puts(currcmd);
+    struct command *command = malloc(sizeof(struct command));
+    read_command_string(currcmd, command);
+
+    if (first == NULL) {
+      first = command;
+      first -> pipeto = NULL;
+      previous = first;
+    } else {
+      previous -> pipeto = command;
+      command -> pipeto = NULL;
+      previous = command;
+    }
+    currcmd = strtok_r(NULL, PIPE, &savepointer);
+  } while(currcmd != NULL);
+
+  return first;
 }
 
 void free_command(struct command *command)
@@ -53,6 +82,9 @@ void free_command(struct command *command)
     free(command->args[i]);
   }
   free(command->args);
+  if ((command -> pipeto) != NULL) {
+    free_command(command -> pipeto);
+  }
   free(command);
 }
 

@@ -8,6 +8,7 @@ struct command {
   char *exe;
   char **args;
   size_t num_args;
+  struct command *pipeto;
 };
 
 /**
