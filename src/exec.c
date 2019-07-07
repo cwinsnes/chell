@@ -12,7 +12,10 @@
 
 void read_command_string(char *input, struct command *command)
 {
-  char tmp[strlen(input)];
+  if (input == NULL) {
+    input = "";
+  }
+  char tmp[strlen(input)+1];
   strcpy(tmp, input);
 
   char *savepointer = NULL;
@@ -54,7 +57,6 @@ struct command* parse_command(char *input)
   char *savepointer = NULL;
   char *currcmd = strtok_r(cpy, PIPE, &savepointer);
   do {
-    puts(currcmd);
     struct command *command = malloc(sizeof(struct command));
     read_command_string(currcmd, command);
 
@@ -100,11 +102,30 @@ void execute_command(struct command *command, struct hashmap *builtins)
     return;
   }
 
-  pid_t pid = fork();
-  if (pid == 0) {
-    execvp(command->exe, command->args);
-    perror(command->exe);
-  }
+  int save_in = dup(STDIN_FILENO);
+  do {
+    int fd[2];
+    if (command -> pipeto) {
+      pipe(fd);
+    }
+    pid_t pid = fork();
+    if (pid == 0) {
+      if (command -> pipeto) {
+	dup2(fd[1], STDOUT_FILENO);
+	close(fd[1]);
+	close(fd[0]);
+      }
+      execvp(command->exe, command->args);
+      perror(command->exe);
+    }
+    if (command -> pipeto) {
+      dup2(fd[0], STDIN_FILENO);
+      close(fd[0]);
+      close(fd[1]);
+    }
+    command = command -> pipeto;
+  } while(command != NULL);
 
   wait(NULL);
+  dup2(save_in, STDIN_FILENO);
 }
