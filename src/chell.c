@@ -31,9 +31,9 @@ int main(void)
     sprintf(promptcpy, "%s:%s:>", user, cwd);
 
     char *line = ch_readline(prompt, strlen(promptcpy));
-    clearline();
     struct command *command = parse_command(line);
     execute_command(command, builtins);
+    clearline();
     free_command(command);
     free(line);
   }

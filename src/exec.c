@@ -95,6 +95,7 @@ void execute_command(struct command *command, struct hashmap *builtins)
   if (!strcmp(command->exe, "")) {
     return;
   }
+
   if (hashm_haskey(builtins, command->exe)) {
     void (*func)(struct command*);
     hashm_get(builtins, command->exe, (void**)&func);
@@ -102,13 +103,15 @@ void execute_command(struct command *command, struct hashmap *builtins)
     return;
   }
 
+  int status;
+  pid_t pid;
   int save_in = dup(STDIN_FILENO);
   do {
     int fd[2];
     if (command -> pipeto) {
       pipe(fd);
     }
-    pid_t pid = fork();
+    pid = fork();
     if (pid == 0) {
       if (command -> pipeto) {
 	dup2(fd[1], STDOUT_FILENO);
@@ -126,6 +129,6 @@ void execute_command(struct command *command, struct hashmap *builtins)
     command = command -> pipeto;
   } while(command != NULL);
 
-  wait(NULL);
+  while(waitpid(-getpgid(0), &status, 0) > 0) {} // Wait for all children
   dup2(save_in, STDIN_FILENO);
 }
