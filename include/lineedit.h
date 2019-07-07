@@ -17,7 +17,7 @@
 #define GRNT "\x1B[32m"
 #define YELT "\x1B[33m"
 #define BLUT "\x1B[34m"
-#define WHTT "\x1B[37m"
+#define WHTT "\x1B[97m"
 
 /**
  * Text formatting.

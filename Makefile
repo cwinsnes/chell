@@ -6,8 +6,9 @@ INCLUDEDIR = include
 CFLAGS = -Wall -Wextra -I./$(SRCDIR) -I ./$(INCLUDEDIR)
 SOURCES = $(wildcard $(SRCDIR)/*.c)
 OBJECTS = $(SOURCES:$(SRCDIR)/%.c=$(OBJDIR)/%.o)
+INCLUDES = $(wildcard $(INCLUDEDIR)/*.h)
 
-.Phony: all
+.Phony: all clean
 all: directories chell
 
 chell: $(OBJECTS)
