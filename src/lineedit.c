@@ -4,8 +4,11 @@
 #include <termios.h>
 #include <unistd.h>
 #include <string.h>
+#include <ctype.h>
+#include <limits.h>
 
 #define ESC_VAL '\033'
+#define ESC_NUL 0x00
 #define ESC_UP 'A'
 #define ESC_DOWN 'B'
 #define ESC_RIGHT 'C'
@@ -39,35 +42,70 @@ void _ch_readline_setup(void)
 }
 
 
-void _step_backward(size_t *bufindex)
+void _step_backward(char **buffer, size_t *bufindex, size_t *buflen)
 {
   if (*bufindex > 0) {
     *bufindex -= 1;
   }
 }
 
-void _step_forward(size_t *bufindex, size_t *buflen)
+void _step_forward(char **buffer, size_t *bufindex, size_t *buflen)
 {
   if (*bufindex < *buflen) {
     *bufindex += 1;
   }
 }
 
+void _step_word_forward(char **buffer, size_t *bufindex, size_t *buflen)
+{
+    char *str = *buffer;
+    if (isspace(str[*bufindex])) {
+        while(isspace(str[*bufindex]) && (*bufindex < *buflen)) {
+            *bufindex += 1;
+        }
+
+    }
+    while(!isspace(str[*bufindex]) && (*bufindex < *buflen)) {
+        *bufindex += 1;
+    } 
+}
+
+void _step_word_backward(char **buffer, size_t *bufindex, size_t *buflen)
+{
+    char *str = *buffer;
+    if (isspace(str[*bufindex])) {
+        while(isspace(str[*bufindex]) && (*bufindex > 0)) {
+            *bufindex -= 1;
+        }
+
+    }
+    while(!isspace(str[*bufindex]) && (*bufindex > 0)) {
+        *bufindex -= 1;
+    } 
+}
+
 void _handle_esc(char **buffer, size_t *bufindex, size_t *buflen)
 {
-  getc(stdin); // Skip '['
   char c = getc(stdin);
+  if (c == '[') {
+    c = getc(stdin);
+  }
   switch(c) {
   case ESC_UP:
     break;
   case ESC_DOWN:
     break;
   case ESC_LEFT:
-    _step_backward(bufindex);
+    _step_backward(buffer, bufindex, buflen);
     break;
   case ESC_RIGHT:
-    _step_forward(bufindex, buflen);
+    _step_forward(buffer, bufindex, buflen);
     break;
+  case 'f':
+    _step_word_forward(buffer, bufindex, buflen);
+    break;
+  case 'b':
+    _step_word_backward(buffer, bufindex, buflen);
   }
 }
 
@@ -93,14 +131,15 @@ char* ch_readline(const char *prompt, size_t promptlen)
     switch (c) {
     case KEY_NEWLINE:
       break;
+    case ESC_NUL:
     case ESC_VAL:
       _handle_esc(&buffer, &bufindex, &buflen);
       break;
     case CTRL_B:
-      _step_backward(&bufindex);
+      _step_backward(&buffer, &bufindex, &buflen);
       break;
     case CTRL_F:
-      _step_forward(&bufindex, &buflen);
+      _step_forward(&buffer, &bufindex, &buflen);
       break;
     case KEY_DELETE: //Do same as backspace for now
     case KEY_BCKSPC:
