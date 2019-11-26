@@ -6,6 +6,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <limits.h>
+#include <dirent.h>
 
 #define ESC_VAL '\033'
 #define ESC_NUL 0x00
@@ -19,6 +20,7 @@
 #define KEY_ESC 27
 #define KEY_BCKSPC 8
 #define KEY_DELETE 127
+#define KEY_TAB 9
 #define KEY_NEWLINE '\n'
 
 static struct termios old_termios;
@@ -49,6 +51,34 @@ void _step_backward(char **buffer, size_t *bufindex, size_t *buflen)
   }
 }
 
+void _tab_complete(char **buffer, size_t *bufindex, size_t *buflen)
+{
+    char *str = *buffer;
+    size_t tmp_bufindex = *bufindex;
+    char tmp_str[*buflen + 1];
+
+    while (tmp_bufindex > 0 && !isspace(str[tmp_bufindex-1])) {
+	tmp_bufindex -= 1;
+    }
+
+    strncpy(tmp_str, str+tmp_bufindex, *bufindex-tmp_bufindex);
+    tmp_str[*bufindex - tmp_bufindex] = '\0';
+    struct dirent *ent;
+    DIR *dir;
+    if ((dir = opendir(".")) != NULL) {
+	while ((ent = readdir(dir)) != NULL) {
+	    if (strncmp(tmp_str, ent->d_name, strlen(tmp_str)) == 0) {
+		strcpy(str+tmp_bufindex, ent->d_name);
+		size_t save_bufindex = *bufindex;
+		*bufindex = tmp_bufindex + strlen(ent->d_name);
+		*buflen += *bufindex - save_bufindex;
+		break;
+	    }
+	}
+    }
+    closedir(dir);
+}
+
 void _step_forward(char **buffer, size_t *bufindex, size_t *buflen)
 {
   if (*bufindex < *buflen) {
@@ -60,28 +90,28 @@ void _step_word_forward(char **buffer, size_t *bufindex, size_t *buflen)
 {
     char *str = *buffer;
     if (isspace(str[*bufindex])) {
-        while(isspace(str[*bufindex]) && (*bufindex < *buflen)) {
-            *bufindex += 1;
-        }
+	while(isspace(str[*bufindex]) && (*bufindex < *buflen)) {
+	    *bufindex += 1;
+	}
 
     }
     while(!isspace(str[*bufindex]) && (*bufindex < *buflen)) {
-        *bufindex += 1;
-    } 
+	*bufindex += 1;
+    }
 }
 
 void _step_word_backward(char **buffer, size_t *bufindex, size_t *buflen)
 {
     char *str = *buffer;
     if (isspace(str[*bufindex])) {
-        while(isspace(str[*bufindex]) && (*bufindex > 0)) {
-            *bufindex -= 1;
-        }
+	while(isspace(str[*bufindex]) && (*bufindex > 0)) {
+	    *bufindex -= 1;
+	}
 
     }
     while(!isspace(str[*bufindex]) && (*bufindex > 0)) {
-        *bufindex -= 1;
-    } 
+	*bufindex -= 1;
+    }
 }
 
 void _handle_esc(char **buffer, size_t *bufindex, size_t *buflen)
@@ -141,28 +171,31 @@ char* ch_readline(const char *prompt, size_t promptlen)
     case CTRL_F:
       _step_forward(&buffer, &bufindex, &buflen);
       break;
+    case KEY_TAB:
+      _tab_complete(&buffer, &bufindex, &buflen);
+      break;
     case KEY_DELETE: //Do same as backspace for now
     case KEY_BCKSPC:
       if (bufindex == 0) {
 	break;
       }
       for (i=bufindex; i<(bufsize-1); i++) {
-	buffer[i-1] = buffer[i];
+	  buffer[i-1] = buffer[i];
       }
       bufindex -= 1;
       buflen -= 1;
       break;
     default:
       for (i=buflen+1; i>bufindex; --i) {
-	buffer[i] = buffer[i-1];
+	  buffer[i] = buffer[i-1];
       }
       buffer[bufindex] = c;
       bufindex += 1;
       buflen += 1;
 
       if (buflen >= bufsize) {
-	bufsize *= 2;
-	buffer = realloc(buffer, bufsize);
+	  bufsize *= 2;
+	  buffer = realloc(buffer, bufsize);
       }
     }
 
