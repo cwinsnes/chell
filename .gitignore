@@ -56,3 +56,5 @@ chell
 *.swp
 .#*
 tags
+TAGS
+*.lock
