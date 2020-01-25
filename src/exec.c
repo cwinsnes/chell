@@ -114,9 +114,9 @@ void execute_command(struct command *command, struct hashmap *builtins)
     pid = fork();
     if (pid == 0) {
       if (command -> pipeto) {
-	dup2(fd[1], STDOUT_FILENO);
-	close(fd[1]);
-	close(fd[0]);
+        dup2(fd[1], STDOUT_FILENO);
+        close(fd[1]);
+        close(fd[0]);
       }
       execvp(command->exe, command->args);
       perror(command->exe);

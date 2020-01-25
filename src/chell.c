@@ -24,8 +24,8 @@ int main(void)
 
   while (CHELL_RUNNING>0) {
     if (!(getcwd(cwd, MAXPATH))) {
-	perror("Error when reading current directory");
-	exit(-1);
+      perror("Error when reading current directory");
+      exit(-1);
     }
     sprintf(prompt, "%s:%s%s%s%s%s:>", user, BLUT, BFTT, cwd, RSTT, WHTT);
     sprintf(promptcpy, "%s:%s:>", user, cwd);
