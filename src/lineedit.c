@@ -26,6 +26,8 @@
 static struct termios old_termios;
 static struct termios current_termios;
 
+const char* DEFAULT_TAB_COMPLETE_FOLDER = ".";
+
 void _ch_readline_teardown(void)
 {
   tcsetattr(STDIN_FILENO, TCSAFLUSH, &old_termios);
@@ -44,7 +46,7 @@ void _ch_readline_setup(void)
 }
 
 
-void _step_backward(char **buffer, size_t *bufindex, size_t *buflen)
+void _step_backward(__attribute__((unused)) char **buffer, size_t *bufindex, __attribute__((unused)) size_t *buflen)
 {
   if (*bufindex > 0) {
     *bufindex -= 1;
@@ -53,30 +55,41 @@ void _step_backward(char **buffer, size_t *bufindex, size_t *buflen)
 
 void _tab_complete(char **buffer, size_t *bufindex, size_t *buflen)
 {
-  char
-    char *str = *buffer;
-  size_t tmp_bufindex = *bufindex;
+  char *slash;
+  const char *folder;
+  char *str = *buffer;
+  size_t word_beginning = *bufindex;
   char tmp_str[*buflen + 1];
 
-  while (tmp_bufindex > 0 && !isspace(str[tmp_bufindex-1])) {
-    tmp_bufindex -= 1;
+  // Copy only last word into tmp_str
+  while (word_beginning > 0 && !isspace(str[word_beginning-1])) {
+    word_beginning -= 1;
+  }
+  strncpy(tmp_str, str+word_beginning, *bufindex-word_beginning);
+  tmp_str[*bufindex-word_beginning] = '\0';
+
+  if ((slash = strrchr(tmp_str, '/'))) {
+    *slash = '\0';
+    folder = tmp_str;
+    slash += 1;
+  } else {
+    slash = tmp_str;
+    folder = DEFAULT_TAB_COMPLETE_FOLDER;
   }
 
-  strncpy(tmp_str, str+tmp_bufindex, *bufindex-tmp_bufindex);
-  tmp_str[*bufindex - tmp_bufindex] = '\0';
-
-  if (slash = strchr(tmp_str, '/')) {
-    puts(tmp_str);
+  // If user pressed tab with empty word, break
+  if (strlen(slash) < 1) {
+    return;
   }
 
   struct dirent *ent;
   DIR *dir;
-  if ((dir = opendir(".")) != NULL) {
+  if ((dir = opendir(folder)) != NULL) {
     while ((ent = readdir(dir)) != NULL) {
-      if (strncmp(tmp_str, ent->d_name, strlen(tmp_str)) == 0) {
-        strcpy(str+tmp_bufindex, ent->d_name);
+      if (strncmp(slash, ent->d_name, strlen(slash)) == 0) {
+        strcpy(str+*bufindex-strlen(slash), ent->d_name);
         size_t save_bufindex = *bufindex;
-        *bufindex = tmp_bufindex + strlen(ent->d_name);
+        *bufindex = *bufindex + strlen(ent->d_name)-strlen(slash);
         *buflen += *bufindex - save_bufindex;
         break;
       }
@@ -85,7 +98,7 @@ void _tab_complete(char **buffer, size_t *bufindex, size_t *buflen)
   closedir(dir);
 }
 
-void _step_forward(char **buffer, size_t *bufindex, size_t *buflen)
+void _step_forward(__attribute__((unused)) char **buffer, size_t *bufindex, size_t *buflen)
 {
   if (*bufindex < *buflen) {
     *bufindex += 1;
@@ -106,7 +119,7 @@ void _step_word_forward(char **buffer, size_t *bufindex, size_t *buflen)
   }
 }
 
-void _step_word_backward(char **buffer, size_t *bufindex, size_t *buflen)
+void _step_word_backward(char **buffer, size_t *bufindex, __attribute__((unused)) size_t *buflen)
 {
   char *str = *buffer;
   if (isspace(str[*bufindex])) {
