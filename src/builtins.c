@@ -13,11 +13,15 @@
 
 void changedir(struct command *cmd)
 {
+  int ret;
   if (cmd -> num_args > 2) {
     fprintf(stderr, "%s: Too many arguments\n", cmd->exe);
     return;
+  } else if (cmd -> num_args > 1) {
+    ret = chdir(cmd->args[1]);
+  } else {
+    ret = chdir(getenv("HOME"));
   }
-  int ret = chdir(cmd->args[1]);
   if (ret) {
     perror(cmd->exe);
   }
