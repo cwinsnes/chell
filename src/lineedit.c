@@ -1,4 +1,3 @@
-#include "lineedit.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <termios.h>
@@ -7,6 +6,8 @@
 #include <ctype.h>
 #include <limits.h>
 #include <dirent.h>
+
+#include "lineedit.h"
 
 #define ESC_VAL '\033'
 #define ESC_NUL 0x00
@@ -53,15 +54,28 @@ void _step_backward(__attribute__((unused)) char **buffer, size_t *bufindex, __a
   }
 }
 
+int _filter_folders(const struct dirent *folder) {
+  if (strcmp(".", folder -> d_name) == 0) {
+    return 0;
+  } else if  (strcmp("..", folder -> d_name) == 0) {
+    return 0;
+  }
+  return 1;
+}
+
 void _tab_complete(char **buffer, size_t *bufindex, size_t *buflen)
 {
+  /*
+   * TODO: Divide this into smaller chunks
+   * TODO: Also include tab completion towards commands
+   */
   char *slash;
   const char *folder;
   char *str = *buffer;
   size_t word_beginning = *bufindex;
   char tmp_str[*buflen + 1];
 
-  // Copy only last word into tmp_str
+  // Copy only current word into tmp_str
   while (word_beginning > 0 && !isspace(str[word_beginning-1])) {
     word_beginning -= 1;
   }
@@ -77,25 +91,39 @@ void _tab_complete(char **buffer, size_t *bufindex, size_t *buflen)
     folder = DEFAULT_TAB_COMPLETE_FOLDER;
   }
 
-  // If user pressed tab with empty word, break
-  if (strlen(slash) < 1) {
+  struct dirent **matching_files;
+  struct dirent *most_recent;
+  int num_files = scandir(folder, &matching_files, _filter_folders, alphasort);
+  if (num_files == -1) {
     return;
   }
 
-  struct dirent *ent;
-  DIR *dir;
-  if ((dir = opendir(folder)) != NULL) {
-    while ((ent = readdir(dir)) != NULL) {
-      if (strncmp(slash, ent->d_name, strlen(slash)) == 0) {
-        strcpy(str+*bufindex-strlen(slash), ent->d_name);
-        size_t save_bufindex = *bufindex;
-        *bufindex = *bufindex + strlen(ent->d_name)-strlen(slash);
-        *buflen += *bufindex - save_bufindex;
-        break;
-      }
+  int n = num_files;
+  for (int i=0; i<num_files; ++i) {
+    if (strncmp(slash, matching_files[i]->d_name, strlen(slash)) != 0) {
+      n -= 1;
+      free(matching_files[i]);
+      matching_files[i] = NULL;
+    } else {
+      most_recent = matching_files[i];
     }
   }
-  closedir(dir);
+  if (n > 1) {
+    printf("\n");
+    for (int i=0; i<num_files; ++i) {
+        if (matching_files[i] != NULL) {
+          printf("%s\t", matching_files[i]->d_name);
+          free(matching_files[i]);
+        }
+    }
+    printf("\n");
+  } else {
+    strcpy(str+*bufindex-strlen(slash), most_recent->d_name);
+    size_t save_bufindex = *bufindex;
+    *bufindex = *bufindex + strlen(most_recent->d_name)-strlen(slash);
+    *buflen += *bufindex - save_bufindex;
+  }
+  free(matching_files);
 }
 
 void _step_forward(__attribute__((unused)) char **buffer, size_t *bufindex, size_t *buflen)
